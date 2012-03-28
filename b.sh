@@ -18,7 +18,7 @@ Notes:
 
 Examples:
     $ b home /home/user
-      Added home,/home/user to bookmark list    
+      Added home,/home/user to bookmark list
     $ b
       List of bookmarks:
       home,/home/user
@@ -71,7 +71,10 @@ __b_cd()
     if [ ! -t 1 ] ; then
       echo -n "$dir"
     else
-      cd $dir
+      pushd $dir
+      if [[ -f "$dir/.b_hook" ]]; then
+        source "$dir/.b_hook"
+      fi
     fi
   else
     echo "That bookmark does not exist." >&2
