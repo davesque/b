@@ -61,7 +61,7 @@ __b_add()
   if [[ -n "$__b_mark" ]]; then
     echo "That bookmark is already in use."
   else
-    dir=`readlink -f $2`
+    dir=`stat -f $2`
 
     echo "$1,$dir" >> $BOOKMARKS_FILE
     echo "Added $1,$dir to bookmarks list"
@@ -87,6 +87,8 @@ __b_cd()
       if [[ -f "$dir/.b_hook" ]]; then
         source "$dir/.b_hook"
       fi
+    elif [[ -f "$dir" && -n "$EDITOR" ]]; then
+      $EDITOR "$dir"
     else
       $open_command "$dir"
     fi
