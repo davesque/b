@@ -40,7 +40,7 @@ HEREDOC
 __b_init()
 {
   if [[ ! -f "$BOOKMARKS_FILE" ]]; then
-    touch "$BOOKMARKS_FILE"
+    touch $BOOKMARKS_FILE
   fi
 }
 
@@ -84,7 +84,7 @@ __b_cd()
     if [ ! -t 1 ] ; then
       echo -n "$dir"
     elif [[ -d $dir ]]; then
-      pushd $dir
+      pushd "$dir"
       if [[ -f "$dir/.b_hook" ]]; then
         source "$dir/.b_hook"
       fi
