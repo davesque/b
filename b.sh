@@ -32,7 +32,7 @@ __b_init() {
 
 # Lists all of the bookmarks in the database.
 __b_list() {
-  echo "List of bookmarks:"
+  echo "${fg_bold[yellow]}List of bookmarks:${reset_color}"
   cat $BOOKMARKS_FILE
 }
 
