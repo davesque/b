@@ -61,7 +61,11 @@ __b_add()
   if [[ -n "$mark" ]]; then
     echo "That bookmark is already in use."
   else
-    dir=`stat -f $2`
+    if [[ $(uname) == "Darwin" ]]; then
+      dir=`stat -f $2`
+    else
+      dir=`readlink -f $2`
+    fi
 
     echo "$1,$dir" >> $BOOKMARKS_FILE
     echo "Added $1,$dir to bookmarks list"
