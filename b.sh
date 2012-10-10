@@ -39,16 +39,14 @@ HEREDOC
 ## private
 
 # Creates the bookmark database if it doesn't exist.
-__b_init()
-{
+__b_init() {
   if [[ ! -f "$BOOKMARKS_FILE" ]]; then
     touch $BOOKMARKS_FILE
   fi
 }
 
 # List all of the bookmarks in the database.
-__b_list()
-{
+__b_list() {
   echo "List of bookmarks:"
   # sorry
   cat "$BOOKMARKS_FILE"
@@ -57,8 +55,7 @@ __b_list()
 # Will add a bookmark to the database if it doesn't already exist.  `add` will
 # also expand the bookmark.  You can use relative paths or things like `.`,
 # `..`, and `~`.
-__b_add()
-{
+__b_add() {
   __b_find_mark $1
   if [[ -n "$mark" ]]; then
     echo "That bookmark is already in use."
@@ -76,8 +73,7 @@ __b_add()
 
 # Will `cd` to the bookmarked directory.  If no bookmark matches the one
 # specified, it will print an error.
-__b_cd()
-{
+__b_cd() {
   __b_find_mark "$1"
   if [[ -n "$mark" ]]; then
     dir=$(echo $mark | sed 's/^[^,]*,\(.*\)/\1/')
@@ -99,8 +95,7 @@ __b_cd()
   fi
 }
 
-__b_find_mark()
-{
+__b_find_mark() {
   mark=$(grep "^$1," < $BOOKMARKS_FILE)
 }
 
@@ -108,8 +103,7 @@ __b_find_mark()
 
 # This is the entry point.  It parses the arguments and then delegates to other
 # functions.
-b()
-{
+b() {
   if [[ "$#" -eq 1 ]]; then
     if [[ $1 == "-h" ]] || [[ $1 == "--help" ]]; then
       echo "$USAGE"
