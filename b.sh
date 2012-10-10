@@ -2,7 +2,9 @@
 # by Rocky Meza
 
 BOOKMARKS_FILE=$HOME/.b_bookmarks
-read -r -d '' USAGE <<HEREDOC
+
+__b_help() {
+  cat <<HEREDOC
 b, a simple bookmarking system
 
 Usage:
@@ -35,8 +37,7 @@ Examples:
     $ b p
       will open ~/.profile with \`\$EDITOR\`
 HEREDOC
-
-## private
+}
 
 # Creates the bookmark database if it doesn't exist.
 __b_init() {
@@ -101,9 +102,9 @@ __b_find_mark() {
 
 # Switch board
 b() {
-  if [[ "$#" -eq 1 ]]; then
-    if [[ $1 == "-h" ]] || [[ $1 == "--help" ]]; then
-      echo "$USAGE"
+  if [[ $# -eq 1 ]]; then
+    if [[ $1 == "-h" || $1 == "--help" ]]; then
+      __b_help
     else
       __b_cd $1
     fi
