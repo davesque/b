@@ -56,7 +56,8 @@ __b_list() {
 # expand the bookmark.  You can use relative paths or things like `.`, `..`,
 # and `~`.
 __b_add() {
-  __b_find_mark $1
+  local mark=$(__b_find_mark "$1")
+
   if [[ -n "$mark" ]]; then
     echo "That bookmark is already in use."
   else
@@ -74,7 +75,8 @@ __b_add() {
 # Changes directories into to the bookmarked directory.  If bookmark refers to
 # a file, will attempt to open with $EDITOR.
 __b_cd() {
-  __b_find_mark "$1"
+  local mark=$(__b_find_mark "$1")
+
   if [[ -n "$mark" ]]; then
     dir=$(echo $mark | sed 's/^[^,]*,\(.*\)/\1/')
     # if not a tty, print to stdout
@@ -97,7 +99,7 @@ __b_cd() {
 }
 
 __b_find_mark() {
-  mark=$(grep "^$1," < $BOOKMARKS_FILE)
+  grep "^$1," < $BOOKMARKS_FILE
 }
 
 # Switch board
