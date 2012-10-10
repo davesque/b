@@ -30,8 +30,10 @@ Examples:
       ...
     $ b home
       will cd to the home directory
+    $ echo \`b home\`
+      /home/user
     $ b p
-      will open ~/.profile
+      will open ~/.profile with \`\$EDITOR\`
 HEREDOC
 
 ## private
