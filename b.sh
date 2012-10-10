@@ -68,7 +68,7 @@ __b_add() {
     fi
 
     echo "$1,$dir" >> $BOOKMARKS_FILE
-    echo "Added $1,$dir to bookmarks list"
+    echo "Added $1,$dir to bookmarks list."
   fi
 }
 
@@ -84,7 +84,8 @@ __b_cd() {
     # If not a terminal, print to stdout
     if [[ ! -t 1 ]]; then
       echo -n "$dir"
-    elif [[ -d $dir ]]; then
+    # If dir, pushd and source .b_hook
+    elif [[ -d "$dir" ]]; then
       pushd "$dir"
       if [[ -f "$dir/.b_hook" ]]; then
         source "$dir/.b_hook"
@@ -112,7 +113,7 @@ b() {
     else
       __b_cd $1
     fi
-  elif [[ "$#" -eq 2 ]]; then
+  elif [[ $# -eq 2 ]]; then
     __b_add $1 $2
   else
     __b_list
