@@ -74,11 +74,6 @@ __b_add()
 
 # Will `cd` to the bookmarked directory.  If no bookmark matches the one
 # specified, it will print an error.
-local open_command="$EDITOR"
-if [[ `uname` = "Darwin" ]]; then
-  open_command=open
-fi
-
 __b_cd()
 {
   __b_find_mark "$1"
@@ -95,7 +90,7 @@ __b_cd()
     elif [[ -f "$dir" && -n "$EDITOR" ]]; then
       $EDITOR "$dir"
     else
-      $open_command "$dir"
+      echo "Please set \$EDITOR environment variable to allow for edit bookmarking." >&2
     fi
   else
     echo "That bookmark does not exist." >&2
