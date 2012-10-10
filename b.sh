@@ -45,16 +45,15 @@ __b_init() {
   fi
 }
 
-# List all of the bookmarks in the database.
+# Lists all of the bookmarks in the database.
 __b_list() {
   echo "List of bookmarks:"
-  # sorry
   cat "$BOOKMARKS_FILE"
 }
 
-# Will add a bookmark to the database if it doesn't already exist.  `add` will
-# also expand the bookmark.  You can use relative paths or things like `.`,
-# `..`, and `~`.
+# Adds a bookmark to the database if it doesn't already exist.  Will also
+# expand the bookmark.  You can use relative paths or things like `.`, `..`,
+# and `~`.
 __b_add() {
   __b_find_mark $1
   if [[ -n "$mark" ]]; then
@@ -71,8 +70,8 @@ __b_add() {
   fi
 }
 
-# Will `cd` to the bookmarked directory.  If no bookmark matches the one
-# specified, it will print an error.
+# Changes directories into to the bookmarked directory.  If bookmark refers to
+# a file, will attempt to open with $EDITOR.
 __b_cd() {
   __b_find_mark "$1"
   if [[ -n "$mark" ]]; then
@@ -85,6 +84,7 @@ __b_cd() {
       if [[ -f "$dir/.b_hook" ]]; then
         source "$dir/.b_hook"
       fi
+    # If file and $EDITOR set, open
     elif [[ -f "$dir" && -n "$EDITOR" ]]; then
       $EDITOR "$dir"
     else
@@ -99,10 +99,7 @@ __b_find_mark() {
   mark=$(grep "^$1," < $BOOKMARKS_FILE)
 }
 
-## public
-
-# This is the entry point.  It parses the arguments and then delegates to other
-# functions.
+# Switch board
 b() {
   if [[ "$#" -eq 1 ]]; then
     if [[ $1 == "-h" ]] || [[ $1 == "--help" ]]; then
@@ -117,5 +114,4 @@ b() {
   fi
 }
 
-# main
 __b_init
