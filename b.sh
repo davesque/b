@@ -62,9 +62,9 @@ __b_add() {
     echo "That bookmark is already in use."
   else
     if [[ $(uname) == "Darwin" ]]; then
-      dir=`stat -f $2`
+      local dir=`stat -f $2`
     else
-      dir=`readlink -f $2`
+      local dir=`readlink -f $2`
     fi
 
     echo "$1,$dir" >> $BOOKMARKS_FILE
@@ -78,9 +78,11 @@ __b_cd() {
   local mark=$(__b_find_mark "$1")
 
   if [[ -n "$mark" ]]; then
-    dir=$(echo $mark | sed 's/^[^,]*,\(.*\)/\1/')
-    # if not a tty, print to stdout
-    if [ ! -t 1 ] ; then
+    # Get bookmark path
+    local dir=$(echo $mark | sed 's/^[^,]*,\(.*\)/\1/')
+
+    # If not a terminal, print to stdout
+    if [[ ! -t 1 ]]; then
       echo -n "$dir"
     elif [[ -d $dir ]]; then
       pushd "$dir"
