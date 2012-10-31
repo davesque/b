@@ -2,7 +2,7 @@
 # by Rocky Meza
 
 # Switch board
-b() {
+function b {
   case $1 in
     "-h"|"--help")
       __b_help
@@ -20,7 +20,7 @@ b() {
 }
 
 # Creates the bookmark database if it doesn't exist.
-__b_init() {
+function __b_init {
   if [[ -z $BOOKMARKS_FILE ]]; then
     BOOKMARKS_FILE=$HOME/.b_bookmarks
   fi
@@ -31,7 +31,7 @@ __b_init() {
 }
 
 # Lists all of the bookmarks in the database.
-__b_list() {
+function __b_list {
   echo "${fg_bold[yellow]}List of bookmarks:${reset_color}"
   cat $BOOKMARKS_FILE
 }
@@ -39,7 +39,7 @@ __b_list() {
 # Adds a bookmark to the database if it doesn't already exist.  Will also
 # expand the bookmark.  You can use relative paths or things like `.`, `..`,
 # and `~`.
-__b_add() {
+function __b_add {
   local mark=$(__b_find_mark $1)
 
   if [[ -n $mark ]]; then
@@ -54,7 +54,7 @@ __b_add() {
 
 # Changes directories into to the bookmarked directory.  If bookmark refers to
 # a file, will attempt to open with $EDITOR.
-__b_cd() {
+function __b_cd {
   local mark=$(__b_find_mark $1)
 
   if [[ -n $mark ]]; then
@@ -81,11 +81,11 @@ __b_cd() {
   fi
 }
 
-__b_find_mark() {
+function __b_find_mark {
   grep "^$1," < $BOOKMARKS_FILE
 }
 
-__b_help() {
+function __b_help {
   cat <<HELP
 b, a simple bookmarking system
 
