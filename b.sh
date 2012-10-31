@@ -38,7 +38,8 @@ function __b_add {
   local mark=$(__b_find_mark $1)
 
   if [[ -n $mark ]]; then
-    echo "That bookmark is already in use"
+    echo "That bookmark is already in use" >& 2
+    return 1
   else
     local dir=$(perl -e 'use Cwd "abs_path"; print abs_path(shift)' $2)
 
@@ -70,9 +71,11 @@ function __b_cd {
       $EDITOR $dir
     else
       echo "Please set the \$EDITOR environment variable to allow for edit bookmarking" >&2
+      return 1
     fi
   else
     echo "That bookmark does not exist" >&2
+    return 1
   fi
 }
 
