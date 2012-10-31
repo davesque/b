@@ -45,11 +45,7 @@ __b_add() {
   if [[ -n $mark ]]; then
     echo "That bookmark is already in use"
   else
-    if [[ $(uname) == "Darwin" ]]; then
-      local dir=$(stat -f $2)
-    else
-      local dir=$(readlink -f $2)
-    fi
+    local dir=$(perl -e 'use Cwd "abs_path"; print abs_path(shift)' $2)
 
     echo "$1,$dir" >> $BOOKMARKS_FILE
     echo "Added $1,$dir to bookmarks list"
