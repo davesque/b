@@ -3,20 +3,15 @@
 
 # Switch board
 function b {
-  case $1 in
-    "-h"|"--help")
-      __b_help
-      ;;
-    *)
-      if [[ $# -eq 2 ]]; then
-        __b_add $1 $2
-      elif [[ $# -eq 1 ]]; then
-        __b_cd $1
-      else
-        __b_list
-      fi
-      ;;
-  esac
+  if [[ $1 == "-h" || $1 == "--help" ]]; then
+    __b_help
+  elif [[ $# -eq 2 ]]; then
+    __b_add $1 $2
+  elif [[ $# -eq 1 ]]; then
+    __b_cd $1
+  else
+    __b_list
+  fi
 }
 
 # Creates the bookmark database if it doesn't exist.
