@@ -89,35 +89,51 @@ function __b_help {
   cat <<HELP
 b, a simple bookmarking system
 
-Usage:
-b [bookmark] [directory]
-b [bookmark] [file]
+usage: b [-h] [BOOKMARK_NAME] [DIRECTORY_PATH|FILE_PATH]
 
-Options:
--h, --help            Show this help screen
+options:
+  -h, --help      show this help message and exit
 
-Notes:
-If b is run with no arguments, it will list all of the bookmarks.
-If it is given a bookmark that is a directory, it will attempt to cd into that bookmark.
-If it is given a bookmark that is a file, it will attempt to open that bookmark.
-If it is given a bookmark and directory or file, it will create that bookmark.
+examples:
 
-Examples:
-$ b home /home/user
+To bookmark directories:
+
+  $ b home /home/user
   Added home,/home/user to bookmark list
-$ b p /home/user/.profile
+
+  $ cd /home/user
+  $ b home .
+  Added home,/home/user to bookmark list
+
+To bookmark files:
+
+  $ b p /home/user/.profile
   Added p,/home/user/.profile to bookmark list
-$ b
+
+  $ cd /home/user
+  $ b p .profile
+  Added p,/home/user/.profile to bookmark list
+
+To go to the directory bookmarked by "home":
+
+  $ b home
+
+To open the file bookmarked by "p" with \$EDITOR:
+
+  $ b p
+
+To list stored bookmarks:
+
+  $ b
   List of bookmarks:
   home,/home/user
   p,/home/user/.profile
   ...
-$ b home
-  will cd to the home directory
-$ echo \`b home\`
+
+To get the path of the directory bookmarked by "home":
+
+  $ echo \`b home\`
   /home/user
-$ b p
-  will open ~/.profile with \`\$EDITOR\`
 
 HELP
 }
