@@ -65,15 +65,22 @@ function __b_cd {
       if [[ -f "$dir/.b_hook" ]]; then
         source "$dir/.b_hook"
       fi
-    # If file and $EDITOR set, open
-    elif [[ -f "$dir" && -n "$EDITOR" ]]; then
-      $EDITOR "$dir"
+    # If file, attempt to open in $EDITOR
+    elif [[ -f "$dir" ]]; then
+      if [[ -n "$EDITOR" ]]; then
+        # Using eval allows for things like EDITOR="vim -c 'set ft=python'".
+        # Don't put insecure content in your bookmarks!
+        eval "$EDITOR \"$dir\""
+      else
+        echo "Please set the \$EDITOR environment variable to allow for file bookmarking" >&2
+        return 1
+      fi
     else
-      echo "Please set the \$EDITOR environment variable to allow for edit bookmarking" >&2
+      echo "Bookmarked file or directory not found" >&2
       return 1
     fi
   else
-    echo "That bookmark does not exist" >&2
+    echo "Bookmark not found" >&2
     return 1
   fi
 }
