@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
 
-# b, a simple bookmarking system
-# by Rocky Meza
-
 # Switch board
 function b {
   if [[ "$1" == "-h" || "$1" == "--help" ]]; then
