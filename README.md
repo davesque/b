@@ -1,5 +1,10 @@
 # b, a simple bookmarking system
 
+## Acknowledgments
+
+`b` was forked from <https://github.com/colinta/b> which was originally forked
+from <https://github.com/rockymeza/b>.
+
 ## Usage
 
     b [-h] [BOOKMARK_NAME] [DIRECTORY_PATH|FILE_PATH]
