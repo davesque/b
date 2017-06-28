@@ -7,49 +7,49 @@ from <https://github.com/rockymeza/b>.
 
 ## Usage
 
-    b [-h] [BOOKMARK_NAME] [DIRECTORY_PATH|FILE_PATH]
+    usage: b [-?|-h|--help]
+             [<bookmark name>]
+             [<bookmark name> (<dir path>|<file path>)]
+             [-n|-t|-c]
+             [(-r|-d) <bookmark name>]
 
-## Options
+    help:
+      -?, -h, --help    show this help message and exit
 
-    -h, --help      show help message and exit
+    listing/sorting:
+      -n                list bookmarks, sorting by name ascending
+      -t                list bookmarks, sorting by target ascending
+      -c                list bookmarks, sorting by hit count descending
 
-## Examples
+    other:
+      -r, -d            delete the named bookmark
 
-To bookmark directories:
+    To bookmark directories:
 
-    $ b home /home/user
-    Added home,/home/user to bookmark list
+      $ b home /home/user
+      Added home,/home/user to bookmark list
 
-    $ cd /home/user
-    $ b home .
-    Added home,/home/user to bookmark list
+      $ cd /home/user
+      $ b home .
+      Added home,/home/user to bookmark list
 
-To bookmark files:
+    To bookmark files:
 
-    $ b p /home/user/.profile
-    Added p,/home/user/.profile to bookmark list
+      $ b p /home/user/.profile
+      Added p,/home/user/.profile to bookmark list
 
-    $ cd /home/user
-    $ b p .profile
-    Added p,/home/user/.profile to bookmark list
+    To go to the directory bookmarked by "home":
 
-To go to the directory bookmarked by "home":
+      $ b home
 
-    $ b home
+    To open the file bookmarked by "p" with \$EDITOR:
 
-To open the file bookmarked by "p" with `$EDITOR`:
+      $ b p
 
-    $ b p
+    To get the path of the directory or file bookmarked by "home":
 
-To list stored bookmarks:
+      $ echo \`b home\`
+      /home/user
 
-    $ b
-    List of bookmarks:
-    home,/home/user
-    p,/home/user/.profile
-    ...
-
-To get the path of the directory bookmarked by "home":
-
-    $ echo `b home`
-    /home/user
+    Specifying no arguments or one of the sorting arguments will list bookmarks in
+    the booksmarks file.
