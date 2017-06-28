@@ -1,9 +1,9 @@
-#!/usr/bin/env bash
-
 # Switch board
 function b {
-  if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+  if [[ $1 == '-?' || $1 == '-h' || $1 == '--help' ]]; then
     __b_help
+  elif [[ $1 == '-n' || $1 == '-t' || $1 == '-c' ]]; then
+    __b_list $1
   elif [[ $# -eq 2 ]]; then
     __b_add "$1" "$2"
   elif [[ $# -eq 1 ]]; then
@@ -13,7 +13,7 @@ function b {
   fi
 }
 
-# Creates the bookmark database if it doesn't exist.
+# Creates the bookmark database if it doesn't exist
 function __b_init {
   if [[ -z "$BOOKMARKS_FILE" ]]; then
     BOOKMARKS_FILE="$HOME/.b_bookmarks"
@@ -24,10 +24,58 @@ function __b_init {
   fi
 }
 
-# Lists all of the bookmarks in the database.
+# Pretty prints a list of all bookmarks in the database
 function __b_list {
-  echo "${fg_bold[yellow]}List of bookmarks:${reset_color}"
-  cat "$BOOKMARKS_FILE"
+  local col1="Name" col2="Target" col3="Count"
+  local colpad=1
+
+  local len1=${#col1} len2=${#col2} len3=${#col3}
+  local len1_=0 len2_=0 len3_=0
+
+  # Determine column widths
+  local n=0
+  while read -r line; do
+    ((n++))
+
+    if [[ $line =~ ^([^,]+),([^,]+),(.+)$ ]]; then
+      len1_=${#BASH_REMATCH[1]}
+      len2_=${#BASH_REMATCH[2]}
+      len3_=${#BASH_REMATCH[3]}
+
+      if (( len1_ > len1 )); then len1=$len1_; fi
+      if (( len2_ > len2 )); then len2=$len2_; fi
+      if (( len3_ > len3 )); then len3=$len3_; fi
+    else
+      __b_err 'line %d in %s has bad format' $n "$BOOKMARKS_FILE"
+      return 1
+    fi
+  done < "$BOOKMARKS_FILE"
+
+  # Print header
+  __b_out "%-$((len1 + colpad))s %-$((len2 + colpad))s %-${len3}s" "$col1" "$col2" "$col3"
+  __b_out '~%.0s' $(seq 1 $(( len1 + len2 + len3 + 2 + 2 * colpad )))
+
+  case $1 in
+    -n) local sortargs=(-k1) ;;
+    -t) local sortargs=(-k2) ;;
+    -c) local sortargs=(-rn -k3) ;;
+    *)  local sortargs=(-k1) ;;
+  esac
+
+  # Print rows
+  local name= target= count=
+  sort --field-separator=, "${sortargs[@]}" "$BOOKMARKS_FILE" |
+  {
+    while read -r line; do
+      if [[ $line =~ ^([^,]+),([^,]+),(.+)$ ]]; then
+        name=${BASH_REMATCH[1]}
+        target=${BASH_REMATCH[2]}
+        count=${BASH_REMATCH[3]}
+
+        __b_out "%-$((len1 + colpad))s %-$((len2 + colpad))s %${len3}s" "$name" "$target" "$count"
+      fi
+    done
+  }
 }
 
 # Adds a bookmark to the database if it doesn't already exist.  Will also
@@ -37,13 +85,13 @@ function __b_add {
   local mark="$(__b_find_mark "$1")"
 
   if [[ -n "$mark" ]]; then
-    echo "That bookmark is already in use" >& 2
+    __b_err 'that bookmark is already in use'
     return 1
   else
     local dir="$(perl -e 'use Cwd "abs_path"; print abs_path(shift)' "$2")"
 
-    echo "$1,$dir" >> "$BOOKMARKS_FILE"
-    echo "Added $1,$dir to bookmarks list"
+    printf '%s,%s,0' "$1" "$dir" >> "$BOOKMARKS_FILE"
+    __b_err 'added %s to bookmarks list' "$1"
   fi
 }
 
@@ -54,33 +102,31 @@ function __b_cd {
 
   if [[ -n "$mark" ]]; then
     # Get bookmark path
-    local dir="$(echo "$mark" | sed 's/^[^,]*,\(.*\)/\1/')"
+    local path="$(cut -f2 -d, <<< "$mark")"
 
-    # If not a terminal, print to stdout
     if [[ ! -t 1 ]]; then
-      echo -n "$dir"
-    # If dir, pushd and source .b_hook
-    elif [[ -d "$dir" ]]; then
-      pushd "$dir"
-      if [[ -f "$dir/.b_hook" ]]; then
-        source "$dir/.b_hook"
+      # If not a terminal, print to stdout
+      echo -n "$path"
+    elif [[ -d "$path" ]]; then
+      # If path, pushd and source .b_hook
+      pushd "$path"
+      if [[ -f "$path/.b_hook" ]]; then
+        source "$path/.b_hook"
       fi
-    # If file, attempt to open in $EDITOR
-    elif [[ -f "$dir" ]]; then
+    elif [[ -f "$path" ]]; then
+      # If file, attempt to open in $EDITOR
       if [[ -n "$EDITOR" ]]; then
-        # Using eval allows for things like EDITOR="vim -c 'set ft=python'".
-        # Don't put insecure content in your bookmarks!
-        eval "$EDITOR \"$dir\""
+        "$EDITOR" "$path"
       else
-        echo "Please set the \$EDITOR environment variable to allow for file bookmarking" >&2
+        __b_err 'please set the \$EDITOR environment variable to allow for file bookmarking'
         return 1
       fi
     else
-      echo "Bookmarked file or directory not found" >&2
+      __b_err 'bookmarked file or directory not found'
       return 1
     fi
   else
-    echo "Bookmark not found" >&2
+    __b_err 'bookmark not found'
     return 1
   fi
 }
@@ -89,14 +135,26 @@ function __b_find_mark {
   grep "^$1," < "$BOOKMARKS_FILE"
 }
 
+function __b_out {
+  printf "$1" "${@:2}"
+  printf '\n'
+}
+
+function __b_err {
+  __b_out "b: $1" "${@:2}" >&2
+}
+
 function __b_help {
-  cat <<HELP
-b, a simple bookmarking system
+  cat <<EOF
+usage: b [-?|-h|--help|-n|-t|-c] [<bookmark name>] [<dir path>|<file path>]
 
-usage: b [-h] [BOOKMARK_NAME] [DIRECTORY_PATH|FILE_PATH]
+help:
+  -?, -h, --help    show this help message and exit
 
-options:
-  -h, --help      show this help message and exit
+listing/sorting:
+  -n                list bookmarks, sorting by name ascending
+  -t                list bookmarks, sorting by target ascending
+  -c                list bookmarks, sorting by hit count descending
 
 examples:
 
@@ -114,10 +172,6 @@ To bookmark files:
   $ b p /home/user/.profile
   Added p,/home/user/.profile to bookmark list
 
-  $ cd /home/user
-  $ b p .profile
-  Added p,/home/user/.profile to bookmark list
-
 To go to the directory bookmarked by "home":
 
   $ b home
@@ -126,20 +180,14 @@ To open the file bookmarked by "p" with \$EDITOR:
 
   $ b p
 
-To list stored bookmarks:
-
-  $ b
-  List of bookmarks:
-  home,/home/user
-  p,/home/user/.profile
-  ...
-
-To get the path of the directory bookmarked by "home":
+To get the path of the directory or file bookmarked by "home":
 
   $ echo \`b home\`
   /home/user
 
-HELP
+Specifying no arguments or one of the sorting arguments will list bookmarks in
+the database.
+EOF
 }
 
 __b_init
