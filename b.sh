@@ -71,8 +71,8 @@ function __b_list {
   done < "$BOOKMARKS_FILE"
 
   # Print header
-  __b_out "%-$((len1 + colpad))s %-$((len2 + colpad))s %-${len3}s" "$col1" "$col2" "$col3"
-  __b_out '~%.0s' $(seq 1 $(( len1 + len2 + len3 + 2 + 2 * colpad )))
+  __b_msg "%-$((len1 + colpad))s %-$((len2 + colpad))s %-${len3}s" "$col1" "$col2" "$col3"
+  __b_msg '~%.0s' $(seq 1 $(( len1 + len2 + len3 + 2 + 2 * colpad )))
 
   case $1 in
     -n) local sortargs=(-k1) ;;
