@@ -1,9 +1,13 @@
 # Switch board
 function b {
+  __b_init_db
+
   if [[ $1 == '-?' || $1 == '-h' || $1 == '--help' ]]; then
     __b_help
   elif [[ $1 == '-n' || $1 == '-t' || $1 == '-c' ]]; then
     __b_list $1
+  elif [[ $1 == '-r' || $1 == '-d' ]]; then
+    __b_rm "$2"
   elif [[ $# -eq 2 ]]; then
     __b_add "$1" "$2"
   elif [[ $# -eq 1 ]]; then
@@ -13,18 +17,33 @@ function b {
   fi
 }
 
-# Creates the bookmark database if it doesn't exist
-function __b_init {
-  if [[ -z "$BOOKMARKS_FILE" ]]; then
-    BOOKMARKS_FILE="$HOME/.b_bookmarks"
-  fi
+# Printf wrappers
+function __b_out {
+  printf "$1" "${@:2}"
+  printf '\n'
+}
+function __b_msg {
+  __b_out "$@" >&2
+}
+function __b_err {
+  __b_out "b: $1" "${@:2}" >&2
+}
 
+# Ensures that the booksmarks file exists
+function __b_init_db {
   if [[ ! -f "$BOOKMARKS_FILE" ]]; then
     touch "$BOOKMARKS_FILE"
   fi
 }
 
-# Pretty prints a list of all bookmarks in the database
+# Ensures that required env vars are set
+function __b_init_env {
+  if [[ -z "$BOOKMARKS_FILE" ]]; then
+    BOOKMARKS_FILE="$HOME/.b_bookmarks"
+  fi
+}
+
+# Pretty prints a list of all bookmarks in the bookmarks file
 function __b_list {
   local col1="Name" col2="Target" col3="Count"
   local colpad=1
@@ -78,88 +97,105 @@ function __b_list {
   }
 }
 
-# Adds a bookmark to the database if it doesn't already exist.  Will also
-# expand the bookmark.  You can use relative paths or things like `.`, `..`,
-# and `~`.
-function __b_add {
-  local mark="$(__b_find_mark "$1")"
+# Attempts to retrieve an entry from the bookmarks file
+function __b_get {
+  if ! grep "^$1," < "$BOOKMARKS_FILE"; then
+    __b_err 'bookmark not found'
+    return 1
+  fi
+}
 
-  if [[ -n "$mark" ]]; then
+# Adds a bookmark to the booksmarks file if it doesn't already exist.  Will
+# also expand the path being bookmarked.
+function __b_add {
+  if __b_get "$1" &> /dev/null; then
     __b_err 'that bookmark is already in use'
     return 1
-  else
-    local dir="$(perl -e 'use Cwd "abs_path"; print abs_path(shift)' "$2")"
-
-    printf '%s,%s,0' "$1" "$dir" >> "$BOOKMARKS_FILE"
-    __b_err 'added %s to bookmarks list' "$1"
   fi
+
+  local dir="$(perl -e 'use Cwd "abs_path"; print abs_path(shift)' "$2")"
+  printf '%s,%s,0\n' "$1" "$dir" >> "$BOOKMARKS_FILE"
+
+  __b_msg 'added "%s" to bookmarks list' "$1"
 }
 
-# Changes directories into to the bookmarked directory.  If bookmark refers to
-# a file, will attempt to open with $EDITOR.
+# Changes directories into to the bookmarked directory.  If the bookmark refers
+# to a file, opens it with $EDITOR.
 function __b_cd {
-  local mark="$(__b_find_mark "$1")"
+  __b_get "$1" &> /dev/null || return $?
 
-  if [[ -n "$mark" ]]; then
-    # Get bookmark path
-    local path="$(cut -f2 -d, <<< "$mark")"
+  local mark="$(__b_get "$1")"
+  local path="$(cut -f2 -d, <<< "$mark")"
 
-    if [[ ! -t 1 ]]; then
-      # If not a terminal, print to stdout
-      printf '%s' "$path"
-    elif [[ -d "$path" ]]; then
-      # If path, pushd and source .b_hook
-      pushd "$path"
-      if [[ -f "$path/.b_hook" ]]; then
-        source "$path/.b_hook"
-      fi
-    elif [[ -f "$path" ]]; then
-      # If file, attempt to open in $EDITOR
-      if [[ -n "$EDITOR" ]]; then
-        "$EDITOR" "$path"
-      else
-        __b_err 'please set the \$EDITOR environment variable to allow for file bookmarking'
-        return 1
-      fi
-    else
-      __b_err 'bookmarked file or directory not found'
-      return 1
+  # If not a terminal, print to stdout
+  if [[ ! -t 1 ]]; then
+    printf '%s' "$path"
+
+    __b_inc "$1"
+    return 0
+  fi
+
+  # If directory, pushd and source .b_hook
+  if [[ -d "$path" ]]; then
+    pushd "$path"
+
+    if [[ -f "$path/.b_hook" ]]; then
+      source "$path/.b_hook"
     fi
-  else
-    __b_err 'bookmark not found'
+
+    __b_inc "$1"
+    return 0
+  fi
+
+  # Otherwise, must be file bookmark
+  if [[ ! -f "$path" ]]; then
+    __b_err 'bookmarked file or directory not found'
     return 1
   fi
-}
 
-function __b_find_mark {
-  grep "^$1," < "$BOOKMARKS_FILE"
-}
-
-function __b_inc_mark {
-  local mark="$(__b_find_mark "$1")"
-
-  if [[ -n "$mark" ]]; then
-    # Get bookmark info
-    local path="$(cut -f2 -d, <<< "$mark")"
-    local count="$(cut -f3 -d, <<< "$mark")"
-  else
-    __b_err 'bookmark not found'
+  if [[ ! -n "$EDITOR" ]]; then
+    __b_err 'please set the \$EDITOR environment variable to visit file bookmarks'
     return 1
   fi
+
+  "$EDITOR" "$path"
+
+  __b_inc "$1"
 }
 
-function __b_out {
-  printf "$1" "${@:2}"
-  printf '\n'
+# Increments the count of a bookmark
+function __b_inc {
+  __b_get "$1" &> /dev/null || return $?
+
+  local mark="$(__b_get "$1")"
+  local path="$(cut -f2 -d, <<< "$mark")"
+  local count="$(cut -f3 -d, <<< "$mark")"
+
+  # Build line with new count
+  local newline="$1,$path,$(( count + 1 ))"
+  local escaped="$(sed -e 's/[\/&]/\\&/g' <<< "$newline")"
+
+  # Insert new line
+  perl -pi -e "s/^$1,.*$/$escaped/g" "$BOOKMARKS_FILE"
 }
 
-function __b_err {
-  __b_out "b: $1" "${@:2}" >&2
+# Removes a bookmark from the bookmarks file
+function __b_rm {
+  __b_get "$1" &> /dev/null || return $?
+
+  # Remove line
+  perl -ni -e "/^$1,.*$/ || print" "$BOOKMARKS_FILE"
+
+  __b_msg 'deleted "%s" from bookmarks list' "$1"
 }
 
 function __b_help {
   cat <<EOF
-usage: b [-?|-h|--help|-n|-t|-c] [<bookmark name>] [<dir path>|<file path>]
+usage: b [-?|-h|--help]
+         [<bookmark name>]
+         [<bookmark name> (<dir path>|<file path>)]
+         [-n|-t|-c]
+         [(-r|-d) <bookmark name>]
 
 help:
   -?, -h, --help    show this help message and exit
@@ -169,7 +205,8 @@ listing/sorting:
   -t                list bookmarks, sorting by target ascending
   -c                list bookmarks, sorting by hit count descending
 
-examples:
+other:
+  -r, -d            delete the named bookmark
 
 To bookmark directories:
 
@@ -199,8 +236,8 @@ To get the path of the directory or file bookmarked by "home":
   /home/user
 
 Specifying no arguments or one of the sorting arguments will list bookmarks in
-the database.
+the booksmarks file.
 EOF
 }
 
-__b_init
+__b_init_env
