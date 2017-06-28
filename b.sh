@@ -106,7 +106,7 @@ function __b_cd {
 
     if [[ ! -t 1 ]]; then
       # If not a terminal, print to stdout
-      echo -n "$path"
+      printf '%s' "$path"
     elif [[ -d "$path" ]]; then
       # If path, pushd and source .b_hook
       pushd "$path"
@@ -133,6 +133,19 @@ function __b_cd {
 
 function __b_find_mark {
   grep "^$1," < "$BOOKMARKS_FILE"
+}
+
+function __b_inc_mark {
+  local mark="$(__b_find_mark "$1")"
+
+  if [[ -n "$mark" ]]; then
+    # Get bookmark info
+    local path="$(cut -f2 -d, <<< "$mark")"
+    local count="$(cut -f3 -d, <<< "$mark")"
+  else
+    __b_err 'bookmark not found'
+    return 1
+  fi
 }
 
 function __b_out {
