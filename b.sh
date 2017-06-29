@@ -119,10 +119,26 @@ function __b_add {
   __b_msg 'added "%s" to bookmarks list' "$1"
 }
 
+# Increments the count of a bookmark
+function __b_inc {
+  __b_get "$1" &> /dev/null || return $?
+
+  local mark="$(__b_get "$1")"
+  local path="$(cut -f2 -d, <<< "$mark")"
+  local count="$(cut -f3 -d, <<< "$mark")"
+
+  # Build line with new count
+  local newline="$1,$path,$(( count + 1 ))"
+  local escaped="$(sed -e 's/[\/&]/\\&/g' <<< "$newline")"
+
+  # Insert new line
+  perl -pi -e "s/^$1,.*$/$escaped/g" "$BOOKMARKS_FILE"
+}
+
 # Changes directories into to the bookmarked directory.  If the bookmark refers
 # to a file, opens it with $EDITOR.
 function __b_cd {
-  __b_get "$1" &> /dev/null || return $?
+  __b_get "$1" 1> /dev/null || return $?
 
   local mark="$(__b_get "$1")"
   local path="$(cut -f2 -d, <<< "$mark")"
@@ -163,25 +179,9 @@ function __b_cd {
   __b_inc "$1"
 }
 
-# Increments the count of a bookmark
-function __b_inc {
-  __b_get "$1" &> /dev/null || return $?
-
-  local mark="$(__b_get "$1")"
-  local path="$(cut -f2 -d, <<< "$mark")"
-  local count="$(cut -f3 -d, <<< "$mark")"
-
-  # Build line with new count
-  local newline="$1,$path,$(( count + 1 ))"
-  local escaped="$(sed -e 's/[\/&]/\\&/g' <<< "$newline")"
-
-  # Insert new line
-  perl -pi -e "s/^$1,.*$/$escaped/g" "$BOOKMARKS_FILE"
-}
-
 # Removes a bookmark from the bookmarks file
 function __b_rm {
-  __b_get "$1" &> /dev/null || return $?
+  __b_get "$1" 1> /dev/null || return $?
 
   # Remove line
   perl -ni -e "/^$1,.*$/ || print" "$BOOKMARKS_FILE"
