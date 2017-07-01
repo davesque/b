@@ -113,8 +113,23 @@ function __b_add {
     return 1
   fi
 
-  local dir="$(perl -e 'use Cwd "abs_path"; print abs_path(shift)' "$2")"
-  printf '%s,%s,0\n' "$1" "$dir" >> "$BOOKMARKS_FILE"
+  local path="$(perl -e 'use Cwd "abs_path"; print abs_path(shift)' "$2")"
+
+  if [[ -f "$path/.b_hook" ]]; then
+    cat <<EOF
+!!!! WARNING !!!!
+A .b_hook file already exists in this location.  This file will be sourced
+whenever you visit this bookmark.
+EOF
+    read -p $'\nDo you still want to continue? [y/n] ' -n 1 -r
+    printf '\n'
+
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+      return 1
+    fi
+  fi
+
+  printf '%s,%s,0\n' "$1" "$path" >> "$BOOKMARKS_FILE"
 
   __b_msg 'added "%s" to bookmarks list' "$1"
 }
