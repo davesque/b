@@ -45,7 +45,7 @@ function __b_init_env {
 
 # Pretty prints a list of all bookmarks in the bookmarks file
 function __b_list {
-  local col1="Name" col2="Target" col3="Count"
+  local col1=Name col2=Target col3=Count
   local colpad=1
 
   local len1=${#col1} len2=${#col2} len3=${#col3}
@@ -54,7 +54,7 @@ function __b_list {
   # Determine column widths
   local n=0
   while read -r line; do
-    ((n++))
+    (( n++ ))
 
     if [[ $line =~ ^([^,]+),([^,]+),(.+)$ ]]; then
       len1_=${#BASH_REMATCH[1]}
@@ -72,7 +72,7 @@ function __b_list {
 
   # Print header
   __b_out "%-$((len1 + colpad))s %-$((len2 + colpad))s %-${len3}s" "$col1" "$col2" "$col3"
-  __b_out '~%.0s' $(seq 1 $(( len1 + len2 + len3 + 2 + 2 * colpad )))
+  __b_out '~%.0s' $(seq 1 $((len1 + len2 + len3 + 2 + 2 * colpad)))
 
   case $1 in
     -n) local sortargs=(-k1) ;;
