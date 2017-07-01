@@ -143,23 +143,20 @@ function __b_cd {
   local mark="$(__b_get "$1")"
   local path="$(cut -f2 -d, <<< "$mark")"
 
+  __b_inc "$1"
+
   # If not a terminal, print to stdout
   if [[ ! -t 1 ]]; then
     printf '%s' "$path"
-
-    __b_inc "$1"
     return 0
   fi
 
   # If directory, pushd and source .b_hook
   if [[ -d "$path" ]]; then
     pushd "$path"
-
     if [[ -f "$path/.b_hook" ]]; then
       source "$path/.b_hook"
     fi
-
-    __b_inc "$1"
     return 0
   fi
 
@@ -175,8 +172,6 @@ function __b_cd {
   fi
 
   "$EDITOR" "$path"
-
-  __b_inc "$1"
 }
 
 # Removes a bookmark from the bookmarks file
